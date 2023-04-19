@@ -78,6 +78,8 @@ void handleStatus(TPacket *packet)
 
 void handleResponse(TPacket *packet)
 {
+
+	// printf("how many times handleRepsonse?");
 	// The response code is stored in command
 	switch(packet->command)
 	{
@@ -87,20 +89,21 @@ void handleResponse(TPacket *packet)
 			resp[0] = NET_ERROR_PACKET;
 			resp[1] = RESP_OK;
 			sendNetworkData(resp, sizeof(resp));
-		break;
+			break;
 
 		case RESP_STATUS:
 			handleStatus(packet);
-		break;
+			break;
 
 		default:
-		printf("Boo\n");
+			printf("Boo\n");
 	}
 }
 
 
 void handleUARTPacket(TPacket *packet)
 {
+	// printf("handleUARTPacket");
 	switch(packet->packetType)
 	{
 		case PACKET_TYPE_COMMAND:
@@ -192,7 +195,7 @@ void sendNetworkData(const char *data, int len)
         // Use this to store the number of bytes actually written to the TLS connection.
         int c;
 
-		printf("WRITING TO CLIENT\n");
+		// printf("WRITING TO CLIENT\n");
  
         if(tls_conn != NULL) {
             /* TODO: Implement SSL write here to write data to the network. Note that
@@ -224,26 +227,29 @@ void handleCommand(void *conn, const char *buffer)
 	commandPacket.params[1] = cmdParam[1];
 
 	printf("COMMAND RECEIVED: %c %d %d\n", cmd, cmdParam[0], cmdParam[1]);
-	printf("%d", cmd);
+	// printf("%d", cmd);
 	
 	switch(cmd)
 	{
+			// commandPacket.command = COMMAND_M_FORWARD;
+			// uartSendPacket(&commandPacket);
+			// break;
 		case 'f':
 		case 'F':
-			printf("im in 2");
-			printf("%d",cmd);
 			commandPacket.command = COMMAND_FORWARD;
 			uartSendPacket(&commandPacket);
 			break;
 
 		case 'b':
 		case 'B':
+		case 'h':
 			commandPacket.command = COMMAND_REVERSE;
 			uartSendPacket(&commandPacket);
 			break;
 
 		case 'l':
 		case 'L':
+		case 't':
 			commandPacket.command = COMMAND_TURN_LEFT;
 			uartSendPacket(&commandPacket);
 			break;
@@ -270,6 +276,11 @@ void handleCommand(void *conn, const char *buffer)
 		case 'g':
 		case 'G':
 			commandPacket.command = COMMAND_GET_STATS;
+			uartSendPacket(&commandPacket);
+			break;
+		
+		case 'p':
+			commandPacket.command = COMMAND_COLOUR;
 			uartSendPacket(&commandPacket);
 			break;
 

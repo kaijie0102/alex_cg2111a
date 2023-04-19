@@ -29,10 +29,10 @@ volatile TDirection dir = STOP;
 
 // Motor control pins. You need to adjust these till
 // Alex moves in the correct direction
-#define LF                  10  // Left forward pin
-#define LR                  11   // Left reverse pin
-#define RR                  5  // Right reverse pin
-#define RF                  6  // Right forward pin
+#define LF                  11  // Left forward pin (left looking from the front)
+#define LR                  10   // Left reverse pin
+#define RR                  6  // Right reverse pin   
+#define RF                  5  // Right forward pin
 
 /*
       Alex's State Variables
@@ -65,6 +65,21 @@ volatile unsigned long reverseDist;
 unsigned long deltaDist;
 unsigned long newDist;
 
+long MTIME=200;
+long MPWM=90;
+
+#define ECHOPIN 13
+
+#define TRIGPIN 12
+#define LEDPIN 8
+#define S3PIN 7
+#define S2PIN 4
+#define S1PIN 1
+#define S0PIN 0 
+
+
+const float SPEED_OF_SOUND = 0.034;
+int duration;
 // 01_Interrupts.ino
 void enablePullups();
 void leftISR();
@@ -86,15 +101,6 @@ void sendOK();
 void sendResponse(TPacket *packet);
 void waitForHello();
 
-// dbprintf("hello", a);
-void dbprintf(char *format, ...) {
-  va_list args;
-  char buffer[128];
-  va_start(args, format);
-  vsprintf(buffer, format, args);
-  sendMessage(buffer);
-}
-
 // 03_Serial_Communications.ino
 void setupSerial();
 void startSerial();
@@ -105,9 +111,13 @@ void writeSerial(const char *buffer, int len);
 void setupMotors();
 void startMotors();
 int pwmVal(float speed);
+void forward();
 void forward(float dist, float speed);
+//void reverse();
 void reverse(float dist, float speed);
+//void left();
 void left(float ang, float speed);
+//void right();
 void right(float ang, float speed);
 void stop();
 void clearCounters();
@@ -116,9 +126,20 @@ void initializeState();
 void handleCommand(TPacket *command);
 void handlePacket(TPacket *packet);
 
+// 05_External.ino
+void setupExt(); 
+//int getDistance();
+void getColor();
+void calibrate();
 
-
-
+// dbprintf("hello", a);
+void dbprintf(char *format, ...) {
+  va_list args;
+  char buffer[128];
+  va_start(args, format);
+  vsprintf(buffer, format, args);
+  sendMessage(buffer);
+}
 
 void setup() {
   // put your setup code here, to run once:
@@ -132,6 +153,7 @@ void setup() {
   enablePullups();
   initializeState();
   sei();
+  setupExt();
 }
 
 void loop() {
@@ -149,6 +171,7 @@ void loop() {
   //forward(0, 100);
 
   // Uncomment the code below for Week 9 Studio 2
+  // dbprintf("hello");  
   // put your main code here, to run repeatedly:
   TPacket recvPacket; // This holds commands from the Pi
 
@@ -164,6 +187,8 @@ void loop() {
   {
     sendBadChecksum();
   }
+
+
 
 
 }
