@@ -234,28 +234,28 @@ void handleCommand(void *conn, const char *buffer)
 			// commandPacket.command = COMMAND_M_FORWARD;
 			// uartSendPacket(&commandPacket);
 			// break;
-		case 'f':
-		case 'F':
+		case 'f': // f is a forward motion that lasts for 200ms. Basically to inch robot forward
+		case 'F': // F is a big forward motion that will make robot move forward by a large distance
 			commandPacket.command = COMMAND_FORWARD;
 			uartSendPacket(&commandPacket);
 			break;
 
-		case 'b':
-		case 'B':
-		case 'h':
+		case 'b': // inch backwards
+		case 'B': // move backwards by large distance
+		case 'h': // h is a command that will help with overcoming the hump. Basically moving quickly for a set duration until the bot passes the hump
 			commandPacket.command = COMMAND_REVERSE;
 			uartSendPacket(&commandPacket);
 			break;
-
-		case 'l':
-		case 'L':
-		case 't':
+ 
+		case 'l': // rotate left slightly
+		case 'L': // rotate left by big angle
+		case 't': // t is to about turn, ie to turn the robot to face the back
 			commandPacket.command = COMMAND_TURN_LEFT;
 			uartSendPacket(&commandPacket);
 			break;
 
-		case 'r':
-		case 'R':
+		case 'r': // rotate right slightly
+		case 'R': // rotate right by big angle
 			commandPacket.command = COMMAND_TURN_RIGHT;
 			uartSendPacket(&commandPacket);
 			break;

@@ -14,16 +14,22 @@ void setupMotors()
         B1IN - Pin 10, PB2, OC1B
         B2In - pIN 11, PB3, OC2A
   */
-  pinMode(LF, OUTPUT);
-  pinMode(RF, OUTPUT);
-  pinMode(LR, OUTPUT);
-  pinMode(RR, OUTPUT);
+
+  // pinMode(LF, OUTPUT);
+  // pinMode(RF, OUTPUT);
+  // pinMode(LR, OUTPUT);
+  // pinMode(RR, OUTPUT);
+
+  // set pins to output
+  // LF = PB3, LR = PB2
+  DDRB = ( (LFpin) | (LRpin) )
+  // RF = PD5, RR = PD6
+  DDRD = ( (RFpin) | (RRpin) )
+
 
 }
 
 // Start the PWM for Alex's motors.
-// We will implement this later. For now it is
-// blank.
 void startMotors()
 {
 
@@ -49,7 +55,9 @@ int pwmVal(float speed)
 void forward(float dist, float speed)
 {
   dir = FORWARD;
-  if (dist==0 && speed ==0){
+  if (dist==0 && speed==0){
+
+    // inching forward
     int val = pwmVal(MPWM+5);
     int val2 = pwmVal(MPWM);
     analogWrite(LF, val);
@@ -63,6 +71,7 @@ void forward(float dist, float speed)
     analogWrite(RR, 0);
   } else {
 
+    // moving forward based on distance set
     int val = pwmVal(speed);
 
     // For now we will ignore dist and move
@@ -94,7 +103,9 @@ void forward(float dist, float speed)
 void reverse(float dist, float speed)
 {
   dir = BACKWARD;
+
   if (dist==0 && speed ==0){
+    // for inching back
     int val = pwmVal(MPWM+5);
     int val2 = pwmVal(MPWM);
     analogWrite(LR, val);
@@ -145,8 +156,10 @@ void reverse(float dist, float speed)
 // turn left indefinitely.
 void left(float ang, float speed)
 {
+
   dir = LEFT;
   if (ang==0 && speed ==0){
+    // for inching left
     int val = pwmVal(MPWM-10);
     int val2 = pwmVal(MPWM-15);
     analogWrite(LF, val);
@@ -159,6 +172,9 @@ void left(float ang, float speed)
     analogWrite(LF, 0);
     analogWrite(RR, 0);
   }else if (ang==180, speed == 0){
+
+    // perform an about turn
+
     int val = pwmVal(MPWM-10);
     int val2 = pwmVal(MPWM-15);
 
@@ -198,8 +214,10 @@ void left(float ang, float speed)
 // turn right indefinitely.
 void right(float ang, float speed)
 {
+
   dir = RIGHT;
   if (ang==0 && speed ==0){
+    // for inching right
     int val = pwmVal(MPWM-10);
     int val2 = pwmVal(MPWM-15);
     analogWrite(RF, val);
@@ -265,7 +283,7 @@ void clearCounters()
 void clearOneCounter(int which)
 {
   clearCounters();
-  /*
+  
     switch (which)
     {
     case 0:
@@ -273,29 +291,46 @@ void clearOneCounter(int which)
       break;
 
     case 1:
-      leftTicks = 0;
+      leftForwardTicks = 0;
       break;
 
     case 2:
-      rightTicks = 0;
+      rightForwardTicks = 0;
       break;
 
     case 3:
-      leftRevs = 0;
+      leftReverseTicks = 0;
       break;
 
     case 4:
-      rightRevs = 0;
+      rightReverseTicks = 0;
       break;
-
     case 5:
-      forwardDist = 0;
+      leftForwardTicksTurns = 0;
       break;
 
     case 6:
+      rightForwardTicksTurns = 0;
+      break;
+    case 7:
+      leftReverseTicksTurns = 0;
+      break;
+    case 8:
+      rightReverseTicksTurns = 0;
+      break;
+    case 9:
+      leftRevs = 0;
+      break;
+    case 10:
+      rightRevs = 0;
+      break;
+    case 11:
+      forwardDist = 0;
+      break;
+    case 12:
       reverseDist = 0;
       break;
-    }*/
+    }
 }
 // Intialize Vincet's internal states
 void initializeState()
@@ -352,7 +387,6 @@ void handleCommand(TPacket *command)
     case COMMAND_CLEAR_STATS:
       sendOK();
       clearCounters();
-      //getColor();
 
     case COMMAND_COLOUR:
       sendOK();

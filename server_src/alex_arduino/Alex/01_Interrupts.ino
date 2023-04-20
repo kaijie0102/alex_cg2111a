@@ -33,10 +33,12 @@ void leftISR()
     reverseDist = (unsigned long) ((float) leftReverseTicks / COUNTS_PER_REV * WHEEL_CIRC);
   }
   if (dir == LEFT) {
-    leftReverseTicksTurns++;
+    leftForwardTicksTurns++;
+    // leftAngle = (unsigned long)((float) leftForwardTicksTurns / COUNTS_PER_REV * WHEEL_CIRC);
   }
   if (dir == RIGHT) {
-    leftForwardTicksTurns++;
+    leftReverseTicksTurns++;
+    // rightAngle = (unsigned long)((float) leftForwardTicks / COUNTS_PER_REV * WHEEL_CIRC);
   }
 
 }
