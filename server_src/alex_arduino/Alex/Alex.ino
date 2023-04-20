@@ -37,7 +37,10 @@ volatile TDirection dir = STOP;
 // Bare metal set up
 // LF = PB3, LR = PB2
 // RF = PD5, RR = PD6
-# define LF 
+# define LFpin 3 
+# define LRpin 2
+# define RRpin 6
+# define RFpin 5
 
 
 /*
@@ -67,9 +70,14 @@ volatile unsigned long rightRevs;
 // Forward and backward distance traveled
 volatile unsigned long forwardDist;
 volatile unsigned long reverseDist;
+volatile unsigned long leftAngle;
+volatile unsigned long rightAngle;
 
 unsigned long deltaDist;
 unsigned long newDist;
+
+unsigned long deltaAngle;
+unsigned long newAngle;
 
 long MTIME=200;
 long MPWM=90;

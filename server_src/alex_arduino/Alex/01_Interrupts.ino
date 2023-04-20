@@ -26,19 +26,19 @@ void leftISR()
   //  Serial.println(leftTicks);
   if (dir == FORWARD) {
     leftForwardTicks++;
-    forwardDist = (unsigned long) ((float) leftForwardTicks / COUNTS_PER_REV * WHEEL_CIRC);
+    forwardDist += (unsigned long) ((float) leftForwardTicks / COUNTS_PER_REV * WHEEL_CIRC);
   }
   if (dir == BACKWARD) {
     leftReverseTicks++;
-    reverseDist = (unsigned long) ((float) leftReverseTicks / COUNTS_PER_REV * WHEEL_CIRC);
+    reverseDist += (unsigned long) ((float) leftReverseTicks / COUNTS_PER_REV * WHEEL_CIRC);
   }
   if (dir == LEFT) {
     leftForwardTicksTurns++;
-    // leftAngle = (unsigned long)((float) leftForwardTicksTurns / COUNTS_PER_REV * WHEEL_CIRC);
+    leftAngle = (unsigned long)((float) leftForwardTicksTurns / COUNTS_PER_REV * WHEEL_CIRC);
   }
   if (dir == RIGHT) {
     leftReverseTicksTurns++;
-    // rightAngle = (unsigned long)((float) leftForwardTicks / COUNTS_PER_REV * WHEEL_CIRC);
+    rightAngle = (unsigned long)((float) leftReverseTicksTurns / COUNTS_PER_REV * WHEEL_CIRC);
   }
 
 }

@@ -74,24 +74,32 @@ void forward(float dist, float speed)
     // moving forward based on distance set
     int val = pwmVal(speed);
 
-    // For now we will ignore dist and move
-    // forward indefinitely. We will fix this
-    // in Week 9.
     if (dist > 0) {
       deltaDist = dist;
     } else {
+      // moving forward indefiitely
       deltaDist = 999999;
     }
     newDist = forwardDist + deltaDist;
-    analogWrite(LF, val);
-    analogWrite(RF, val);
+    while (forwardDist!=newDist){
+      analogWrite(LF, val);
+      analogWrite(RF, val);
+      analogWrite(LR, 0);
+      analogWrite(RR, 0);
+    }
+
+    // finished moving
+    analogWrite(LF, 0);
+    analogWrite(RF, 0);
     analogWrite(LR, 0);
     analogWrite(RR, 0);
   }
 
   // LF = Left forward pin, LR = Left reverse pin
   // RF = Right forward pin, RR = Right reverse pin
-  // This will be replaced later with bare-metal code.
+  
+  // clear leftForwardTicks counter
+  clearOneCounter(1);
 
 }
 
@@ -134,19 +142,29 @@ void reverse(float dist, float speed)
   else{
     int val = pwmVal(speed);
 
-    // For now we will ignore dist and
-    // reverse indefinitely. We will fix this
-    // in Week 9.
+    if (dist > 0) {
+      deltaDist = dist;
+    } else {
+      // moving backwards indefiitely
+      deltaDist = 999999;
+    }
+    newDist = reverseDist + deltaDist;
+    while (reverseDist!=newDist){
+      analogWrite(LR, val);
+      analogWrite(RR, val);
+      analogWrite(LR, 0);
+      analogWrite(RR, 0);
+    }
 
-    // LF = Left forward pin, LR = Left reverse pin
-    // RF = Right forward pin, RR = Right reverse pin
-    // This will be replaced later with bare-metal code.
-    analogWrite(LR, val);
-    analogWrite(RR, val);
+    // finished moving
     analogWrite(LF, 0);
     analogWrite(RF, 0);
-
+    analogWrite(LR, 0);
+    analogWrite(RR, 0);
   }
+  // clear leftReverseTicks counter
+  clearOneCounter(2);
+
 }
 
 // Turn Alex left "ang" degrees at speed "speed".
@@ -195,16 +213,30 @@ void left(float ang, float speed)
   else{
 
     int val = pwmVal(speed);
+    if (ang > 0) {
+      deltaAngle = dist;
+    } else {
+      // moving backwards indefiitely
+      deltaAngle = 999999;
+    }
+    newAngle = leftAngle + deltaAngle;
+    while (leftAngle!=newAngle){
+      analogWrite(LR, val);
+      analogWrite(RF, val);
+      analogWrite(LF, 0);
+      analogWrite(RR, 0);
+    }
 
-    // For now we will ignore ang. We will fix this in Week 9.
-    // We will also replace this code with bare-metal later.
-    // To turn left we reverse the left wheel and move
-    // the right wheel forward.
-    analogWrite(LR, val);
-    analogWrite(RF, val);
+    // finished moving
     analogWrite(LF, 0);
+    analogWrite(RF, 0);
+    analogWrite(LR, 0);
     analogWrite(RR, 0);
   }
+
+  // clear leftForwardTicksTurns counter
+  clearOneCounter(5);
+    
 }
 
 // Turn Alex right "ang" degrees at speed "speed".
@@ -232,16 +264,31 @@ void right(float ang, float speed)
   }else{
 
     int val = pwmVal(speed);
+    int val = pwmVal(speed);
+    if (ang > 0) {
+      deltaAngle = dist;
+    } else {
+      // moving backwards indefiitely
+      deltaAngle = 999999;
+    }
+    newAngle = rightAngle + deltaAngle;
+    while (rightAngle!=newAngle){
+      analogWrite(RR, val);
+      analogWrite(LF, val);
+      analogWrite(LR, 0);
+      analogWrite(RF, 0);
+    }
 
-    // For now we will ignore ang. We will fix this in Week 9.
-    // We will also replace this code with bare-metal later.
-    // To turn right we reverse the right wheel and move
-    // the left wheel forward.
-    analogWrite(RR, val);
-    analogWrite(LF, val);
-    analogWrite(LR, 0);
+    // finished moving
+    analogWrite(LF, 0);
     analogWrite(RF, 0);
+    analogWrite(LR, 0);
+    analogWrite(RR, 0);
+    
   }
+
+  // clear leftReverseTicksTurns counter
+  clearOneCounter(7);
 }
 
 
