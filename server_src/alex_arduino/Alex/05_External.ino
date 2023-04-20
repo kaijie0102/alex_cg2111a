@@ -2,7 +2,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
-//ultrasonic = pin12
+ultrasonic = pin12
 
 /*
   #define ECHOPIN 13
