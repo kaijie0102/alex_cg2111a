@@ -34,11 +34,9 @@ void leftISR()
   }
   if (dir == LEFT) {
     leftForwardTicksTurns++;
-    leftAngle = (unsigned long)((float) leftForwardTicksTurns / COUNTS_PER_REV * WHEEL_CIRC);
   }
   if (dir == RIGHT) {
     leftReverseTicksTurns++;
-    rightAngle = (unsigned long)((float) leftReverseTicksTurns / COUNTS_PER_REV * WHEEL_CIRC);
   }
 
 }
@@ -60,6 +58,15 @@ void rightISR()
   //rightTicks++;
 
   //Serial.println(leftTicks / COUNTS_PER_REV * WHEEL_CIRC);
+}
+
+ISR(TIMER0_COMPA_vect){
+}
+ISR(TIMER0_COMPB_vect){
+}
+ISR(TIMER1_COMPA_vect){
+}
+ISR(TIMER1_COMPB_vect){
 }
 
 // Set up the external interrupt pins INT0 and INT1

@@ -8,23 +8,36 @@
 // to drive the motors.
 void setupMotors()
 {
-  /* Our motor set up is:
-        A1IN - Pin 5, PD5, OC0B
-        A2IN - Pin 6, PD6, OC0A
-        B1IN - Pin 10, PB2, OC1B
-        B2In - pIN 11, PB3, OC2A
-  */
 
   // pinMode(LF, OUTPUT);
   // pinMode(RF, OUTPUT);
   // pinMode(LR, OUTPUT);
   // pinMode(RR, OUTPUT);
 
-  // set pins to output
-  // LF = PB3, LR = PB2
-  DDRB = ( (LFpin) | (LRpin) )
-  // RF = PD5, RR = PD6
-  DDRD = ( (RFpin) | (RRpin) )
+
+
+  /* Our motor set up is:
+        A1IN - Pin 5, PD5, OC0B = RF
+        A2IN - Pin 6, PD6, OC0A = RR
+        B2In - pIN 9, PB1, OC1A = LF
+        B1IN - Pin 10, PB2, OC1B = LR
+  */
+  TCNT0 = 0;
+  TCCR0A = 0b10100001;
+  
+  OCR0A = 0;
+  OCR0B = 0;
+  
+  TIMSK0 |= 0b110;
+  
+  // set up timer1
+  TCNT1 = 0;
+  TCCR1A = 0b10100001;;
+  
+  OCR1A = 0;
+  OCR1B = 0;
+  
+  TIMSK1 |= 0b110;
 
 
 }
@@ -33,6 +46,14 @@ void setupMotors()
 void startMotors()
 {
 
+  TCCR0B = 0b00000011;
+  TCCR1B = 0b00000011;
+  
+  // set pins to output
+  // LF = PB1, LR = PB2
+  DDRB = ( (LFpin) | (LRpin) )
+  // RF = PD5, RR = PD6
+  DDRD = ( (RFpin) | (RRpin) )
 }
 
 // Convert percentages to PWM values
@@ -60,15 +81,12 @@ void forward(float dist, float speed)
     // inching forward
     int val = pwmVal(MPWM+5);
     int val2 = pwmVal(MPWM);
-    analogWrite(LF, val);
-    analogWrite(RF, val2);
-    analogWrite(LR, 0);
-    analogWrite(RR, 0);
+    OCR0A = 0;
+    OCR0B = val;
+    OCR1A = val2;
+    OCR1B = 0;
     delay(MTIME);
-    analogWrite(LF, 0);
-    analogWrite(RF, 0);
-    analogWrite(LR, 0);
-    analogWrite(RR, 0);
+    stop();
   } else {
 
     // moving forward based on distance set
@@ -82,18 +100,16 @@ void forward(float dist, float speed)
     }
     newDist = forwardDist + deltaDist;
     while (forwardDist!=newDist){
-      analogWrite(LF, val);
-      analogWrite(RF, val);
-      analogWrite(LR, 0);
-      analogWrite(RR, 0);
+      OCR0A = 0;
+      OCR0B = val;
+      OCR1A = val;
+      OCR1B = 0;
     }
 
     // finished moving
-    analogWrite(LF, 0);
-    analogWrite(RF, 0);
-    analogWrite(LR, 0);
-    analogWrite(RR, 0);
+    
   }
+  stop();
 
   // LF = Left forward pin, LR = Left reverse pin
   // RF = Right forward pin, RR = Right reverse pin
@@ -116,27 +132,20 @@ void reverse(float dist, float speed)
     // for inching back
     int val = pwmVal(MPWM+5);
     int val2 = pwmVal(MPWM);
-    analogWrite(LR, val);
-    analogWrite(RR, val2);
-    analogWrite(LF, 0);
-    analogWrite(RF, 0);
+    OCR0A = val;
+    OCR0B = 0;
+    OCR1A = 0;
+    OCR1B = val2;
     delay(MTIME);
-    analogWrite(LR, 0);
-    analogWrite(RR, 0);
-    analogWrite(LF, 0);
-    analogWrite(RF, 0);
+
   }else if(dist==1&&speed==1){
     int val = pwmVal(MPWM+5);
     int val2 = pwmVal(MPWM);
-    analogWrite(LR, val);
-    analogWrite(RR, val2);
-    analogWrite(LF, 0);
-    analogWrite(RF, 0);
+    OCR0A = val;
+    OCR0B = 0;
+    OCR1A = 0;
+    OCR1B = val2;
     delay(MTIME*6);
-    analogWrite(LR, 0);
-    analogWrite(RR, 0);
-    analogWrite(LF, 0);
-    analogWrite(RF, 0);
     
   }
   else{
@@ -150,18 +159,15 @@ void reverse(float dist, float speed)
     }
     newDist = reverseDist + deltaDist;
     while (reverseDist!=newDist){
-      analogWrite(LR, val);
-      analogWrite(RR, val);
-      analogWrite(LR, 0);
-      analogWrite(RR, 0);
+      OCR0A = val;
+      OCR0B = 0;
+      OCR1A = 0;
+      OCR1B = val;
     }
 
     // finished moving
-    analogWrite(LF, 0);
-    analogWrite(RF, 0);
-    analogWrite(LR, 0);
-    analogWrite(RR, 0);
   }
+  stop();
   // clear leftReverseTicks counter
   clearOneCounter(2);
 
@@ -180,15 +186,13 @@ void left(float ang, float speed)
     // for inching left
     int val = pwmVal(MPWM-10);
     int val2 = pwmVal(MPWM-15);
-    analogWrite(LF, val);
-    analogWrite(RR, val2);
-    analogWrite(RF, 0);
-    analogWrite(LR, 0);
+    OCR0A = 0;
+    OCR0B = val;
+    OCR1A = 0;
+    OCR1B = val2;
+    
     delay(MTIME-50);
-    analogWrite(LR, 0);
-    analogWrite(RF, 0);
-    analogWrite(LF, 0);
-    analogWrite(RR, 0);
+
   }else if (ang==180, speed == 0){
 
     // perform an about turn
@@ -197,16 +201,13 @@ void left(float ang, float speed)
     int val2 = pwmVal(MPWM-15);
 
     for (int i=0;i<12;i++){
-      analogWrite(LF, val);
-      analogWrite(RR, val);
-      analogWrite(RF, 0);
-      analogWrite(LR, 0);
+      OCR0A = 0;
+      OCR0B = val;
+      OCR1A = 0;
+      OCR1B = val2;
       delay(MTIME-50);
-      analogWrite(LR, 0);
-      analogWrite(RF, 0);
-      analogWrite(LF, 0);
-      analogWrite(RR, 0);
-      delay(MTIME);
+      stop();
+      delay(MTIME); // delay to avoid too much movement
     }
     
   }
@@ -221,18 +222,20 @@ void left(float ang, float speed)
     }
     newAngle = leftAngle + deltaAngle;
     while (leftAngle!=newAngle){
-      analogWrite(LR, val);
-      analogWrite(RF, val);
-      analogWrite(LF, 0);
-      analogWrite(RR, 0);
+      // analogWrite(LR, val);
+      // analogWrite(RF, val);
+      // analogWrite(LF, 0);
+      // analogWrite(RR, 0);
+      OCR0A = 0;
+      OCR0B = val;
+      OCR1A = 0;
+      OCR1B = val2;
+    
     }
 
     // finished moving
-    analogWrite(LF, 0);
-    analogWrite(RF, 0);
-    analogWrite(LR, 0);
-    analogWrite(RR, 0);
   }
+  stop();
 
   // clear leftForwardTicksTurns counter
   clearOneCounter(5);
@@ -252,38 +255,40 @@ void right(float ang, float speed)
     // for inching right
     int val = pwmVal(MPWM-10);
     int val2 = pwmVal(MPWM-15);
-    analogWrite(RF, val);
-    analogWrite(LR, val2);
-    analogWrite(LF, 0);
-    analogWrite(RR, 0);
+    // analogWrite(RF, val);
+    // analogWrite(LR, val2);
+    // analogWrite(LF, 0);
+    // analogWrite(RR, 0);
+
+    OCR0A = val;
+    OCR0B = 0;
+    OCR1A = val2;
+    OCR1B = 0;
     delay(MTIME-50);
-    analogWrite(RF, 0);
-    analogWrite(LR, 0);
-    analogWrite(LF, 0);
-    analogWrite(RR, 0);
+    stop();
   }else{
 
     int val = pwmVal(speed);
-    int val = pwmVal(speed);
     if (ang > 0) {
-      deltaAngle = dist;
+      deltaAngle = ang;
     } else {
       // moving backwards indefiitely
       deltaAngle = 999999;
     }
     newAngle = rightAngle + deltaAngle;
     while (rightAngle!=newAngle){
-      analogWrite(RR, val);
-      analogWrite(LF, val);
-      analogWrite(LR, 0);
-      analogWrite(RF, 0);
+      // analogWrite(RR, val);
+      // analogWrite(LF, val);
+      // analogWrite(LR, 0);
+      // analogWrite(RF, 0);
+      OCR0A = val;
+      OCR0B = 0;
+      OCR1A = val;
+      OCR1B = 0;
     }
 
     // finished moving
-    analogWrite(LF, 0);
-    analogWrite(RF, 0);
-    analogWrite(LR, 0);
-    analogWrite(RR, 0);
+    stop();
     
   }
 
@@ -296,10 +301,14 @@ void right(float ang, float speed)
 void stop()
 {
   dir = STOP;
-  analogWrite(LF, 0);
-  analogWrite(LR, 0);
-  analogWrite(RF, 0);
-  analogWrite(RR, 0);
+  // analogWrite(LF, 0);
+  // analogWrite(LR, 0);
+  // analogWrite(RF, 0);
+  // analogWrite(RR, 0);
+  OCR0A = 0;
+  OCR0B = 0;
+  OCR1A = 0;
+  OCR1B = 0;
 }
 
 /*

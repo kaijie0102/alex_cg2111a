@@ -172,19 +172,7 @@ void setup() {
 
 void loop() {
 
-  //digitalWrite(LF,HIGH);
-  //digitalWrite(RF,HIGH);
-  //digitalWrite(LR,HIGH);
-  //digitalWrite(RR,HIGH);
-  //analogWrite(LF,50);
-  //analogWrite(RF,50);
 
-
-  // Uncomment the code below for Step 2 of Activity 3 in Week 8 Studio 2
-
-  //forward(0, 100);
-
-  // Uncomment the code below for Week 9 Studio 2
   // dbprintf("hello");  
   // put your main code here, to run repeatedly:
   TPacket recvPacket; // This holds commands from the Pi
