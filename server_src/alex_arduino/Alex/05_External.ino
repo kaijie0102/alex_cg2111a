@@ -2,97 +2,114 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
-//ultrasonic = pin12
-
 /*
-  #define ECHOPIN 13
-
-  #define TRIGPIN 12
-  #define LEDPIN 8
-  #define S3PIN 7
-  #define S2PIN 4
-  #define S1PIN 1
-  #define S0PIN 0
-
-  float RED, BLUE, GREEN;
-  const float SPEED_OF_SOUND = 0.034;
-  int duration;
+  #define LEDPIN - Port B pin 0
+  #define S3PIN - Port D pin 7  
+  #define S2PIN - Port D pin 4
+  #define S1PIN - Port D pin 1
+  #define S0PIN - Port D pin 0 
 */
 
-
+volatile long _timerTicks;
 
 void setupExt() {
-  pinMode(ECHOPIN, INPUT);
-  pinMode(LEDPIN, INPUT);
-  pinMode(TRIGPIN, OUTPUT);
-  pinMode(S3PIN, OUTPUT);
-  pinMode(S2PIN, OUTPUT);
-  pinMode(S1PIN, OUTPUT);
-  pinMode(S0PIN, OUTPUT);
-
-  digitalWrite(S0PIN, HIGH);
-  digitalWrite(S1PIN, LOW); //set to LOW for 20% scaling
+  
+  cli();
+  DDRB &= 0b11111110; // pin 8 as input for color sensor
+  DDRD |= 0b10010011; // pin 7, 4, 1, 0 as outputs from the color sensor
+  PORTD &= 11111100; // set pin1(S1) and pin0(S0) to low for 20% scaling for color sensor
+  sei();
+  
   Serial.begin(9600);
 }
 
-/*
-  int getDistance() {
-    digitalWrite(TRIGPIN, LOW);
-    delayMicroseconds(2);
-    digitalWrite(TRIGPIN, HIGH);
-    delayMicroseconds(10);
-    digitalWrite(TRIGPIN, LOW);
-    duration = pulseIn(ECHOPIN, HIGH);
-    Serial.println(duration * SPEED_OF_SOUND / 2);
-  }
-*/
+
+//baremetal implementation for delay function
+void alex_delay (int dur) {
+  
+  cli();
+  TCCR1B = 0b00000000;
+  TCCR1A = 0b00000000;
+  TIMSK1 = 0b10;
+  OCR1A = 15999; // 1ms
+  TCNT1 = 0;
+  _timerTicks = 0; // Reset counter
+  TCCR1B = 0b00001001;
+  sei();
+
+  while (_timerTicks < dur); //the actual delay function
+  
+}
+
+
+ISR(TIMER1_COMPA_vect){
+  _timerTicks++;
+}
+
+
+
+//bare metal implementation for pulseIn function
+unsigned long alex_pulseIn() {
+    while (PINB & 0b00000001); //wait for pin to go to low
+
+    unsigned long pulseStart = micros();
+    while (!(PINB & 0b00000001)); //wait for pin to go to high again
+
+    return micros() - pulseStart;
+}
+
 
 void calibrate() {
-  unsigned long red_reading = 0;
-  unsigned long blue_reading = 0;
-  unsigned long green_reading = 0;
-  int SAMPLES = 50;
+    unsigned long red_reading = 0;
+    unsigned long blue_reading = 0;
+    unsigned long green_reading = 0;
+    int SAMPLES = 50;
+  
+    unsigned long redval, blueval, greenval;
+    dbprintf("Calibrating...");
 
-  unsigned long redval, blueval, greenval;
-  dbprintf("Calibrating...");
-  for (int i = 0; i < SAMPLES; i++) {
-    digitalWrite(S2PIN, LOW);
-    digitalWrite(S3PIN, LOW);
-    redval = pulseIn(LEDPIN, LOW);
-    delay(100);
-
-    digitalWrite(S2PIN, LOW);
-    digitalWrite(S3PIN, HIGH);
-    blueval = pulseIn(LEDPIN, LOW);
-    delay(100);
-
-    digitalWrite(S2PIN, HIGH);
-    digitalWrite(S3PIN, HIGH);
-    greenval = pulseIn(LEDPIN, LOW);
-    delay(100);
-
-    dbprintf("Rv: %d ", (redval));
-    dbprintf("Bv: %d ", (blueval));
-    dbprintf("Gv: %d", (greenval));
-
-    red_reading += redval;
-    blue_reading += blueval;
-    green_reading += greenval;
-  }
-
-
-  red_reading = red_reading / SAMPLES;
-  blue_reading = blue_reading / SAMPLES;
-  green_reading = green_reading / SAMPLES;
-
-  //    dbprintf("RED: %f",RED);
-  dbprintf("Red: %d", (red_reading));
-  dbprintf("Green: %d", (green_reading));
-  dbprintf("Blue: %d", (blue_reading));
-
-
-  delay(500);
+    //collecting multiple readings so that an average can be taken
+    for (int i = 0; i < SAMPLES; i++) {
+        //setting both S3 and S2 to LOW to get the reading for red color
+        PORTD &= 0b01101111; 
+        redval = alex_pulseIn();
+        alex_delay(100);
+  
+        //setting S3 to HIGH and S2 to LOW to get the reading for blue color
+        PORTD &= 0b11101111;
+        PORTD |= 0b10000000;
+        blueval = alex_pulseIn();
+        alex_delay(100);
+        
+        //setting both S3 and S2 to HIGH to get the reading for green color
+        PORTD |= 0b10010000;
+        greenval = alex_pulseIn();
+        alex_delay(100);
+  
+        dbprintf("Rv: %d ", (redval));
+        dbprintf("Bv: %d ", (blueval));
+        dbprintf("Gv: %d", (greenval));
+    
+        red_reading += redval;
+        blue_reading += blueval;
+        green_reading += greenval;
+    }
+  
+    //taking the average reading of all colors
+    red_reading = red_reading / SAMPLES;
+    blue_reading = blue_reading / SAMPLES;
+    green_reading = green_reading / SAMPLES;
+  
+    
+    dbprintf("Red: %d", (red_reading));
+    dbprintf("Green: %d", (green_reading));
+    dbprintf("Blue: %d", (blue_reading));
+  
+  
+    alex_delay(500);
 }
+
+
 void getColor() {
   int redMin = 80; // Red minimum value
   int redMax = 600; // Red maximum value
@@ -100,7 +117,6 @@ void getColor() {
   int greenMax = 580; // Green maximum value
   int blueMin = 40; // Blue minimum value
   int blueMax = 400; // Blue maximum value
-  //low, low = red || high,high = green || low(S2), high(S3) = blue
   int SAMPLES = 20;
 
   unsigned long red_reading = 0;
@@ -110,58 +126,58 @@ void getColor() {
 
   for (int i = 1; i <= 2; i++) {
     dbprintf("Detecting colour: Round %d",i);
+
+    //collecting multiple readings so that an average can be taken
     for (int i = 0; i < SAMPLES; i++) {
-      digitalWrite(S2PIN, LOW);
-      digitalWrite(S3PIN, LOW);
-      redval = pulseIn(LEDPIN, LOW);
-      delay(100);
+      
+      //setting both S3 and S2 to LOW to get the reading for red color
+      PORTD &= 0b01101111; 
+      redval = alex_pulseIn();
+      alex_delay(100);
 
-      digitalWrite(S2PIN, LOW);
-      digitalWrite(S3PIN, HIGH);
-      blueval = pulseIn(LEDPIN, LOW);
-      delay(100);
-
-      digitalWrite(S2PIN, HIGH);
-      digitalWrite(S3PIN, HIGH);
-      greenval = pulseIn(LEDPIN, LOW);
-      delay(100);
-
-      //        dbprintf("Redval: %d Blueval: %d Greenval: %d",(redval, blueval,greenval));
+      //setting S3 to HIGH and S2 to LOW to get the reading for blue color
+      PORTD &= 0b11101111;
+      PORTD |= 0b10000000;
+      blueval = alex_pulseIn();
+      alex_delay(100);
+      
+      //setting both S3 and S2 to HIGH to get the reading for green color
+      PORTD |= 0b10010000;
+      greenval = alex_pulseIn();
+      alex_delay(100);
 
       red_reading += redval;
       blue_reading += blueval;
       green_reading += greenval;
     }
-    //map(bluePW, blueMin,blueMax,255,0);
+    
+    //taking the average reading and making modifications to the value
     red_reading = red_reading / SAMPLES;
     blue_reading = blue_reading / SAMPLES;
     green_reading = green_reading / SAMPLES;
-    //  dbprintf("pre mapping");
-    //  dbprintf("Red: %d", (red_reading));
-    //  dbprintf("Blue: %d", (blue_reading));
-    //  dbprintf("Green: %d", (green_reading));
-
+ 
     red_reading = map( red_reading, redMin, redMax, 255, 0);
     green_reading = map( green_reading, greenMin, greenMax, 255, 0);
     blue_reading = map( blue_reading, blueMin, blueMax, 255, 0);
+    
+    red_reading = red_reading > 255 ? 255 : 
+                  red_reading < 0 ? 0 : 
+                  red_reading;
+    green_reading = green_reading > 255 ? 255 : 
+                    green_reading < 0 ? 0 : 
+                    green_reading;
+    blue_reading = blue_reading > 255 ? 255 : 
+                   blue_reading < 0 ? 0 : 
+                   blue_reading;
 
-    if (red_reading > 255) red_reading = 255;
-    if (red_reading < 0) red_reading = 0;
-    if (red_reading > 255) green_reading = 255;
-    if (red_reading < 0) green_reading = 0;
-    if (red_reading > 255) blue_reading = 255;
-    if (red_reading < 0) blue_reading = 0;
-
-
-    //  dbprintf("post mapping");
+    
+    //printing the final values to terminal to assist in judgement of color detected
     dbprintf("Red: %d", (red_reading));
     dbprintf("Green: %d", (green_reading));
     dbprintf("Blue: %d", (blue_reading));
 
 
-    //    dbprintf("RED: %f",RED);
-    //  dbprintf("Red: %d Blue: %d Green: %d", (red_reading, blue_reading, green_reading));
-
+    //printing the judgement of values
     if (red_reading <= 255 && red_reading >= 200 && green_reading >= 80 && green_reading <= 190 && blue_reading >= 70 && blue_reading <= 170) {
       dbprintf("Red is detected");
     } else if (red_reading >= 130 && green_reading >= 150 && blue_reading >= 90 && blue_reading <= 200) {
@@ -170,7 +186,7 @@ void getColor() {
       dbprintf("its nothing! move on!");
     }
 
-    delay(500);
+    alex_delay(500);
   }
 
 }
